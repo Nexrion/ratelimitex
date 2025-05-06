@@ -1,8 +1,9 @@
 import functools
 from typing import Optional, Callable, Any, TypeVar, Awaitable
 
-from .client import RateLimitedClient
-from .models import RateLimitStrategy, RateLimiterStats
+from .core import RateLimiter
+from .models import RateLimitStrategy, RateLimiterStats, RateLimitConfig
+from .exceptions import RateLimitExceeded
 
 # Type variable for generic return type
 T = TypeVar('T')
@@ -10,7 +11,7 @@ T = TypeVar('T')
 def rate_limited(
     max_requests: Optional[int] = None,
     time_window: Optional[int] = None,
-    strategy: Optional[RateLimitStrategy] = None,
+    strategy: Optional[RateLimitStrategy] = RateLimitStrategy.STRICT,
     burst_size: Optional[int] = None,
     burst_window: Optional[int] = None,
     cooldown_period: Optional[int] = None,
@@ -19,9 +20,8 @@ def rate_limited(
     """
     Decorator that applies rate limiting to an async function.
     
-    This decorator creates a RateLimitedClient and uses it to rate-limit calls
-    to the decorated function. It handles all retry logic and response processing
-    automatically.
+    This decorator creates a RateLimiter and uses it to rate-limit calls
+    to the decorated function.
     
     Example:
         ```python
@@ -36,7 +36,7 @@ def rate_limited(
     Args:
         max_requests: Maximum number of requests in the time window
         time_window: Time window in seconds
-        strategy: Rate limiting strategy (STRICT, BURST, ADAPTIVE)
+        strategy: Rate limiting strategy (STRICT, BURST, ADAPTIVE). Defaults to STRICT.
         burst_size: Maximum burst size (for BURST strategy)
         burst_window: Burst window in seconds (for BURST strategy)
         cooldown_period: Cooldown period after burst in seconds (for BURST strategy)
@@ -46,8 +46,8 @@ def rate_limited(
         A decorator function that wraps the given async function
     """
     def decorator(func: Callable[..., Awaitable[T]]) -> Callable[..., Awaitable[T]]:
-        # Create a client once per decorated function
-        client = RateLimitedClient(
+        # Create a limiter once per decorated function
+        config = RateLimitConfig(
             max_requests=max_requests,
             time_window=time_window,
             strategy=strategy,
@@ -56,17 +56,19 @@ def rate_limited(
             cooldown_period=cooldown_period,
             extract_headers_callback=extract_headers_callback
         )
+        limiter = RateLimiter(config)
         
         @functools.wraps(func)
         async def wrapper(*args: Any, **kwargs: Any) -> T:
-            # Use the client's execute method to handle rate limiting
-            return await client.execute(func, *args, **kwargs)
+            # Use the limiter's acquire method to handle rate limiting
+            await limiter.acquire()
+            return await func(*args, **kwargs)
         
-        # Add a reference to the client for stats and configuration
-        wrapper.rate_limiter = client
+        # Add a reference to the limiter for stats and configuration
+        wrapper.rate_limiter = limiter
         
         # Allow accessing stats directly from the decorated function
-        wrapper.get_stats = client.get_stats
+        wrapper.get_stats = limiter.get_stats
         # Add type annotation for better IDE support
         wrapper.get_stats.__annotations__['return'] = RateLimiterStats
         

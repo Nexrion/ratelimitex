@@ -4,10 +4,11 @@ version = "0.1.0"
 description = "Enhanced rate limiter with multiple strategies and monitoring capabilities"
 authors = ["Nexrion Team"]
 readme = "README.md"
-packages = [{include = "rate_limiter"}]
+packages = [{include = "rate_limiter", from = "."}]
 
 [tool.poetry.dependencies]
 python = ">=3.8"
+pydantic = "^2.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.0"

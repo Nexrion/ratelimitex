@@ -5,8 +5,10 @@ This module provides helper functions that can be used independently
 of the rate limiter classes.
 """
 
+from typing import Any
+from .exceptions import RateLimitExceeded
 
-def is_rate_limit_error(error: Exception) -> bool:
+def is_rate_limit_error(error: Any) -> bool:
     """
     Determine if an exception is related to rate limiting.
     
@@ -16,36 +18,45 @@ def is_rate_limit_error(error: Exception) -> bool:
     1. HTTP 429 status code directly on the error
     2. HTTP 429 status code on error.response
     3. Rate limit related phrases in the error message
+    4. Our custom RateLimitExceeded exception
     
     Args:
         error: The exception to check
         
     Returns:
-        True if the error appears to be a rate limit error, False otherwise
-        
-    Examples:
-        ```python
-        try:
-            response = await api_client.get("/endpoint")
-        except Exception as e:
-            if is_rate_limit_error(e):
-                print("Hit a rate limit, waiting before retry...")
-                await asyncio.sleep(30)
-                # Then retry
-            else:
-                # Handle other errors
-                raise
-        ```
+        bool: True if the error appears to be a rate limit error
     """
-    # Check for status codes
+    # Check for our custom exception first
+    if isinstance(error, RateLimitExceeded):
+        return True
+        
+    # Check for status code directly on the error
     if hasattr(error, 'status_code') and error.status_code == 429:
         return True
         
-    # Check for response attribute with status_code
-    if hasattr(error, 'response') and hasattr(error.response, 'status_code') and error.response.status_code == 429:
-        return True
-        
-    # Check error message
-    error_str = str(error).lower()
-    rate_limit_phrases = ['rate limit', 'ratelimit', 'too many requests', '429', 'retry after', 'throttle']
-    return any(phrase in error_str for phrase in rate_limit_phrases)
+    # Check for status code on error.response
+    if hasattr(error, 'response') and hasattr(error.response, 'status_code'):
+        if error.response.status_code == 429:
+            return True
+            
+    # Check error message for rate limit related phrases
+    error_msg = str(error).lower()
+    rate_limit_phrases = [
+        'rate limit exceeded',
+        'too many requests',
+        'quota exceeded',
+        'request was throttled',
+        'http 429',
+        'error 429',
+        'rate limit was hit',
+        'request throttling',
+        'rate exceeded',
+        'request limit exceeded',
+        'api limit exceeded',
+        'rate limiting exceeded',
+        'rate-limit exceeded',
+        'ratelimit exceeded'
+    ]
+    
+    # Check for exact matches
+    return error_msg in rate_limit_phrases
