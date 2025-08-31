@@ -21,3 +21,16 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry.urls]
 "Homepage" = "https://github.com/Nexrion/ratelimitex"
 "Bug Tracker" = "https://github.com/Nexrion/ratelimitex/issues"
+
+[tool.ruff]
+target-version = "py39"
+line-length = 100
+
+[tool.ruff.format]
+quote-style = "single"
+indent-style = "space"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = []
+
