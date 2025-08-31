@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "rate_limiter"
+name = "ratelimitex"
 version = "0.1.0"
 description = "Enhanced rate limiter with multiple strategies and monitoring capabilities"
 authors = ["Nexrion Team"]
 readme = "README.md"
-packages = [{include = "rate_limiter", from = "."}]
+packages = [{include = "ratelimitex", from = "."}]
 
 [tool.poetry.dependencies]
 python = ">=3.8"
@@ -19,5 +19,5 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.urls]
-"Homepage" = "https://github.com/yourusername/trade_weave"
-"Bug Tracker" = "https://github.com/yourusername/trade_weave/issues"
+"Homepage" = "https://github.com/Nexrion/ratelimitex"
+"Bug Tracker" = "https://github.com/Nexrion/ratelimitex/issues"
