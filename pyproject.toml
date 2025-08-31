@@ -1,36 +1,72 @@
 [tool.poetry]
+[tool.poetry]
+name = "ratelimitex"
 name = "ratelimitex"
 version = "0.1.0"
+version = "0.1.0"
+description = "Enhanced rate limiter with multiple strategies and monitoring capabilities"
 description = "Enhanced rate limiter with multiple strategies and monitoring capabilities"
 authors = ["Nexrion Team"]
+authors = ["Nexrion Team"]
+readme = "README.md"
 readme = "README.md"
 packages = [{include = "ratelimitex", from = "."}]
+packages = [{include = "ratelimitex", from = "."}]
+
 
 [tool.poetry.dependencies]
+[tool.poetry.dependencies]
+python = ">=3.8"
 python = ">=3.8"
 pydantic = "^2.0"
+pydantic = "^2.0"
+
 
 [tool.poetry.group.dev.dependencies]
+ruff = "^0.6.8"
+pytest = "^7.0"
 pytest = "^7.0"
 pytest-asyncio = "^0.21.0"
+pytest-asyncio = "^0.21.0"
+
 
 [build-system]
+[build-system]
+requires = ["poetry-core"]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+build-backend = "poetry.core.masonry.api"
+
 
 [tool.poetry.urls]
+[tool.poetry.urls]
+"Homepage" = "https://github.com/Nexrion/ratelimitex"
 "Homepage" = "https://github.com/Nexrion/ratelimitex"
 "Bug Tracker" = "https://github.com/Nexrion/ratelimitex/issues"
+"Bug Tracker" = "https://github.com/Nexrion/ratelimitex/issues"
+
 
 [tool.ruff]
+[tool.ruff]
+target-version = "py39"
 target-version = "py39"
 line-length = 100
+line-length = 100
+
 
 [tool.ruff.format]
+[tool.ruff.format]
+quote-style = "single"
 quote-style = "single"
 indent-style = "space"
+indent-style = "space"
+
 
 [tool.ruff.lint]
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
 select = ["E", "F", "I", "UP", "B"]
 ignore = []
+ignore = []
+
 
