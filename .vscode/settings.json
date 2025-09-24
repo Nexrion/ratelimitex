@@ -12,5 +12,8 @@
     "testExplorer.useNativeTesting": false,
     "python.analysis.extraPaths": [
         "${workspaceFolder}"
+    ],
+    "cursorpyright.analysis.extraPaths": [
+        "${workspaceFolder}"
     ]
 }
