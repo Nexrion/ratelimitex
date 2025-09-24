@@ -1,15 +1,18 @@
-from typing import Dict, Any, Optional, Callable, TypeVar, Awaitable
-from .core import RateLimiter
-from .models import RateLimitConfig, RateLimitStrategy, RateLimiterStats
-from .utils import is_rate_limit_error
-import time
 import asyncio
+import time
+from collections.abc import Awaitable
+from typing import Any, Callable, Optional, TypeVar
+
+from .core import RateLimiter
+from .models import RateLimitConfig, RateLimiterStats, RateLimitStrategy
+from .utils import is_rate_limit_error
 
 # Type variable for generic return type
 T = TypeVar('T')
 
 # Global configuration
 _global_config = RateLimitConfig()
+
 
 def configure(
     max_requests: Optional[int] = None,
@@ -18,7 +21,7 @@ def configure(
     burst_size: Optional[int] = None,
     burst_window: Optional[int] = None,
     cooldown_period: Optional[int] = None,
-    extract_headers_callback: Optional[Callable[[Any], Dict[str, str]]] = None
+    extract_headers_callback: Optional[Callable[[Any], dict[str, str]]] = None,
 ) -> None:
     """
     Configure default rate limiting parameters for the entire application.
@@ -81,6 +84,7 @@ class RateLimitedClient:
     response = await client.execute(api_call)
     ```
     """
+
     def __init__(
         self,
         max_requests: Optional[int] = None,
@@ -89,7 +93,7 @@ class RateLimitedClient:
         burst_size: Optional[int] = None,
         burst_window: Optional[int] = None,
         cooldown_period: Optional[int] = None,
-        extract_headers_callback: Optional[Callable[[Any], Dict[str, str]]] = None
+        extract_headers_callback: Optional[Callable[[Any], dict[str, str]]] = None,
     ):
         """
         Create a rate-limited client with optional configuration.
@@ -185,7 +189,7 @@ class RateLimitedClient:
                         continue
 
                 # If we get here, either it's not a rate limit error or we've exceeded max_retries
-                raise last_error
+                raise last_error from None
 
     def update_from_response(self, response: Any) -> None:
         """Update rate limit settings based on API response headers"""
@@ -203,7 +207,7 @@ class RateLimitedClient:
         burst_size: Optional[int] = None,
         burst_window: Optional[int] = None,
         cooldown_period: Optional[int] = None,
-        extract_headers_callback: Optional[Callable[[Any], Dict[str, str]]] = None
+        extract_headers_callback: Optional[Callable[[Any], dict[str, str]]] = None,
     ) -> 'RateLimitedClient':
         """
         Update the current client with new options for subsequent calls.
@@ -248,7 +252,7 @@ class RateLimitedClient:
             burst_size=config.burst_size,
             burst_window=config.burst_window,
             cooldown_period=config.cooldown_period,
-            extract_headers_callback=config.extract_headers_callback
+            extract_headers_callback=config.extract_headers_callback,
         )
 
     def get_stats(self) -> RateLimiterStats:

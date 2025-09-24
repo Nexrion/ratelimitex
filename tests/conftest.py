@@ -1,8 +1,7 @@
-import asyncio
-import pytest
 import time
-from unittest.mock import patch, AsyncMock, MagicMock
-from typing import Dict, Any
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 
 @pytest.fixture
@@ -11,6 +10,7 @@ def mock_time():
     current_time = 1000.0  # Start with a non-zero value
 
     with patch('time.time') as mock:
+
         def side_effect():
             nonlocal current_time
             return current_time
@@ -49,7 +49,7 @@ def mock_api_client():
             self.requests.append((time.time(), endpoint, params))
 
             if self.should_raise_rate_limit:
-                error = Exception("Rate limit exceeded")
+                error = Exception('Rate limit exceeded')
                 error.status_code = 429
                 error.headers = self.headers
                 raise error
@@ -68,18 +68,16 @@ def mock_response_headers():
         'x-ratelimit-limit': '100',
         'x-ratelimit-remaining': '50',
         'x-ratelimit-reset': '300',
-        'retry-after': '30'
+        'retry-after': '30',
     }
 
 
 @pytest.fixture
 def rate_limit_error():
     """Fixture providing a mock rate limit error."""
-    error = Exception("Rate limit exceeded")
+    error = Exception('Rate limit exceeded')
     error.status_code = 429
-    error.headers = {
-        'retry-after': '30'
-    }
+    error.headers = {'retry-after': '30'}
     return error
 
 

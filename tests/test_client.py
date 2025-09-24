@@ -1,7 +1,8 @@
 import pytest
 
-from rate_limiter.client import RateLimitedClient, configure
-from rate_limiter.models import RateLimitStrategy, RateLimiterStats
+from ratelimitex.client import RateLimitedClient, configure
+from ratelimitex.models import RateLimiterStats, RateLimitStrategy
+
 
 @pytest.mark.asyncio
 class TestRateLimitedClient:
@@ -11,10 +12,10 @@ class TestRateLimitedClient:
 
         # Define a mock API call
         async def api_call():
-            return await mock_api_client.get("/test")
+            return await mock_api_client.get('/test')
 
         # Execute the API call
-        result = await client.execute(api_call)
+        await client.execute(api_call)
 
         # Verify the API was called
         assert mock_api_client.call_count == 1
@@ -24,7 +25,9 @@ class TestRateLimitedClient:
 
     async def test_execute_rate_limit_retry(self, mock_api_client, mock_time, mock_sleep):
         """Test automatic retry when a rate limit error occurs."""
-        client = RateLimitedClient(max_requests=5, time_window=2, strategy=RateLimitStrategy.ADAPTIVE)
+        client = RateLimitedClient(
+            max_requests=5, time_window=2, strategy=RateLimitStrategy.ADAPTIVE
+        )
 
         # Make the API client raise a rate limit error on first call
         mock_api_client.should_raise_rate_limit = True
@@ -37,13 +40,13 @@ class TestRateLimitedClient:
             # After the first attempt, stop raising errors
             if count == 1:
                 mock_api_client.should_raise_rate_limit = False
-                result = await mock_api_client.get("/test")
+                result = await mock_api_client.get('/test')
                 return result
             else:
-                return await mock_api_client.get("/test")
+                return await mock_api_client.get('/test')
 
         # Execute the API call - it should retry automatically
-        result = await client.execute(api_call)
+        await client.execute(api_call)
 
         # Verify the API was called twice (original + retry)
         assert mock_api_client.call_count == 2
@@ -51,19 +54,23 @@ class TestRateLimitedClient:
         # Sleep should have been called at least once for the retry
         assert mock_sleep.call_count >= 1
 
-    async def test_execute_max_retries_exceeded_adaptive(self, mock_api_client, mock_time, mock_sleep):
+    async def test_execute_max_retries_exceeded_adaptive(
+        self, mock_api_client, mock_time, mock_sleep
+    ):
         """Test that max retries is enforced."""
-        client = RateLimitedClient(max_requests=5, time_window=10, strategy=RateLimitStrategy.ADAPTIVE)
+        client = RateLimitedClient(
+            max_requests=5, time_window=10, strategy=RateLimitStrategy.ADAPTIVE
+        )
 
         # Make the API client always raise a rate limit error
         mock_api_client.should_raise_rate_limit = True
 
         # Define a mock API call
         async def api_call():
-            return await mock_api_client.get("/test")
+            return await mock_api_client.get('/test')
 
         # Execute the API call - it should retry but eventually fail
-        with pytest.raises(Exception, match="Rate limit exceeded"):
+        with pytest.raises(Exception, match='Rate limit exceeded'):
             await client.execute(api_call)
 
         # Verify the API was called the expected number of times (1 + max_retries)
@@ -72,19 +79,23 @@ class TestRateLimitedClient:
         # Sleep should have been called for each retry
         assert mock_sleep.call_count == 3
 
-    async def test_execute_max_retries_exceeded_strict(self, mock_api_client, mock_time, mock_sleep):
+    async def test_execute_max_retries_exceeded_strict(
+        self, mock_api_client, mock_time, mock_sleep
+    ):
         """Test that max retries is enforced."""
-        client = RateLimitedClient(max_requests=5, time_window=10, strategy=RateLimitStrategy.STRICT)
+        client = RateLimitedClient(
+            max_requests=5, time_window=10, strategy=RateLimitStrategy.STRICT
+        )
 
         # Make the API client always raise a rate limit error
         mock_api_client.should_raise_rate_limit = True
 
         # Define a mock API call
         async def api_call():
-            return await mock_api_client.get("/test")
+            return await mock_api_client.get('/test')
 
         # Execute the API call - it should retry but eventually fail
-        with pytest.raises(Exception, match="Rate limit exceeded"):
+        with pytest.raises(Exception, match='Rate limit exceeded'):
             await client.execute(api_call)
 
         # Verify the API was called the expected number of times (1 + max_retries)
@@ -93,7 +104,6 @@ class TestRateLimitedClient:
         # We should not wait on retry in STRICT mode
         assert mock_sleep.call_count == 0
 
-
     async def test_context_manager(self, mock_api_client, mock_time, mock_sleep):
         """Test using the client as a context manager."""
         client = RateLimitedClient(max_requests=5, time_window=10)
@@ -101,7 +111,7 @@ class TestRateLimitedClient:
         # Use the client as a context manager
         async with client:
             # Do something that would normally need rate limiting
-            await mock_api_client.get("/test")
+            await mock_api_client.get('/test')
 
         # Verify the API was called
         assert mock_api_client.call_count == 1
@@ -111,15 +121,17 @@ class TestRateLimitedClient:
 
     async def test_context_manager_with_error(self, mock_api_client, mock_time, mock_sleep):
         """Test context manager properly handles errors."""
-        client = RateLimitedClient(max_requests=5, time_window=10, strategy=RateLimitStrategy.ADAPTIVE)
+        client = RateLimitedClient(
+            max_requests=5, time_window=10, strategy=RateLimitStrategy.ADAPTIVE
+        )
 
         # Make the API client raise a rate limit error
         mock_api_client.should_raise_rate_limit = True
 
         # Use the client as a context manager with an error
-        with pytest.raises(Exception, match="Rate limit exceeded"):
+        with pytest.raises(Exception, match='Rate limit exceeded'):
             async with client:
-                await mock_api_client.get("/test")
+                await mock_api_client.get('/test')
 
         # Verify the error was processed for rate limiting
         stats = client.get_stats()
@@ -128,9 +140,7 @@ class TestRateLimitedClient:
     async def test_update_from_response(self, mock_api_client, mock_time, mock_response_headers):
         """Test updating rate limit settings from a response."""
         client = RateLimitedClient(
-            max_requests=5,
-            time_window=10,
-            strategy=RateLimitStrategy.ADAPTIVE
+            max_requests=5, time_window=10, strategy=RateLimitStrategy.ADAPTIVE
         )
 
         # Add rate limit headers to the response
@@ -138,10 +148,10 @@ class TestRateLimitedClient:
 
         # Define a mock API call
         async def api_call():
-            return await mock_api_client.get("/test")
+            return await mock_api_client.get('/test')
 
         # Execute the API call
-        result = await client.execute(api_call)
+        await client.execute(api_call)
 
         # Get stats to check if dynamic adjustments were made
         stats = client.get_stats()
@@ -152,9 +162,7 @@ class TestRateLimitedClient:
     async def test_update_from_error(self, mock_api_client, mock_time, rate_limit_error):
         """Test updating rate limit settings from an error."""
         client = RateLimitedClient(
-            max_requests=5,
-            time_window=10,
-            strategy=RateLimitStrategy.ADAPTIVE
+            max_requests=5, time_window=10, strategy=RateLimitStrategy.ADAPTIVE
         )
 
         # Manually update from an error
@@ -170,19 +178,14 @@ class TestRateLimitedClient:
     async def test_with_options(self, mock_time):
         """Test creating a new client with modified options."""
         client = RateLimitedClient(
-            max_requests=5,
-            time_window=10,
-            strategy=RateLimitStrategy.STRICT
+            max_requests=5, time_window=10, strategy=RateLimitStrategy.STRICT
         )
 
         # Create a new client with different options
-        new_client = client.with_options(
-            max_requests=10,
-            strategy=RateLimitStrategy.BURST
-        )
+        new_client = client.with_options(max_requests=10, strategy=RateLimitStrategy.BURST)
 
         # Verify the new client has the updated options
-        stats = new_client.get_stats()
+        _stats = new_client.get_stats()
 
         # The original client should be unchanged
         assert client._limiter.config.max_requests == 5
@@ -200,10 +203,10 @@ class TestRateLimitedClient:
 
         # Define a mock API call
         async def api_call():
-            return await mock_api_client.get("/test")
+            return await mock_api_client.get('/test')
 
         # Execute several API calls
-        for i in range(3):
+        for _i in range(3):
             await client.execute(api_call)
             mock_time.advance(1)  # Advance time between calls
 
@@ -217,12 +220,15 @@ class TestRateLimitedClient:
         assert stats.rate_limit_hits == 0
         assert stats.current_rate > 0  # Should have a positive request rate
 
+
 class TestGlobalConfig:
     def test_configure(self):
         """Test setting the global configuration."""
         # Reset to default by re-importing
         from importlib import reload
-        from rate_limiter import client
+
+        from ratelimitex import client
+
         reload(client)
 
         # Configure global settings
@@ -232,7 +238,7 @@ class TestGlobalConfig:
             strategy=RateLimitStrategy.BURST,
             burst_size=2000,
             burst_window=30,
-            cooldown_period=60
+            cooldown_period=60,
         )
 
         # Create a client with no options - should use global settings
@@ -249,17 +255,10 @@ class TestGlobalConfig:
     def test_client_override(self):
         """Test that client settings override global settings."""
         # Configure global settings
-        configure(
-            max_requests=1000,
-            time_window=120,
-            strategy=RateLimitStrategy.BURST
-        )
+        configure(max_requests=1000, time_window=120, strategy=RateLimitStrategy.BURST)
 
         # Create a client with custom options
-        client = RateLimitedClient(
-            max_requests=500,
-            strategy=RateLimitStrategy.STRICT
-        )
+        client = RateLimitedClient(max_requests=500, strategy=RateLimitStrategy.STRICT)
 
         # Verify the client has the custom settings
         assert client._limiter.config.max_requests == 500
