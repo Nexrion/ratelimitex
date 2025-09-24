@@ -6,24 +6,33 @@ import pytest
 
 @pytest.fixture
 def mock_time():
-    """Fixture to mock time.time() for deterministic tests."""
-    current_time = 1000.0  # Start with a non-zero value
+    """Mock both time.time() and loop time for deterministic tests."""
+    current_time = 1000.0
 
-    with patch('time.time') as mock:
+    with patch('time.time') as mock_time_mod:
+        with patch('asyncio.get_event_loop') as mock_get_loop:
+            # time.time()
+            def time_side_effect():
+                nonlocal current_time
+                return current_time
 
-        def side_effect():
-            nonlocal current_time
-            return current_time
+            mock_time_mod.side_effect = time_side_effect
 
-        # Allow tests to advance time
-        def advance(seconds):
-            nonlocal current_time
-            current_time += seconds
-            return current_time
+            # loop.time()
+            class _MockLoop:
+                def time(self):
+                    return current_time
 
-        mock.side_effect = side_effect
-        mock.advance = advance
-        yield mock
+            mock_get_loop.return_value = _MockLoop()
+
+            # Helper to advance time
+            def advance(seconds):
+                nonlocal current_time
+                current_time += seconds
+                return current_time
+
+            mock_time_mod.advance = advance
+            yield mock_time_mod
 
 
 @pytest.fixture

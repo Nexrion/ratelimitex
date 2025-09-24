@@ -87,8 +87,8 @@ class RateLimiter:
             if key not in self.wait_times:
                 self.wait_times[key] = 0.0
 
-            # Get current time and clean up old requests
-            now = time.time()
+            # Get current time and clean up old requests (use event loop's monotonic clock)
+            now = asyncio.get_event_loop().time()
             self._cleanup_old_requests(now, key)
 
             # Check if we should wait before recording the new request
@@ -102,9 +102,9 @@ class RateLimiter:
                     # Release the lock while waiting
                     self._lock.release()
                     try:
-                        start_wait = time.time()
+                        start_wait = asyncio.get_event_loop().time()
                         await asyncio.sleep(wait_time)
-                        actual_wait = time.time() - start_wait
+                        actual_wait = asyncio.get_event_loop().time() - start_wait
 
                         # Only update wait times after we've actually waited
                         self.wait_times[key] += actual_wait  # Accumulate wait time for this key
@@ -116,7 +116,7 @@ class RateLimiter:
                         await self._lock.acquire()
 
                     # Get new time after waiting
-                    now = time.time()
+                    now = asyncio.get_event_loop().time()
 
                     # Clean up old requests again after waiting
                     self._cleanup_old_requests(now, key)
