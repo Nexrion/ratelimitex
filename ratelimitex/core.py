@@ -145,10 +145,8 @@ class RateLimiter:
                             DEFAULT_ADAPTIVE_MULTIPLIER
                         )
                         logger.info(
-                            
-                                'Resetting adaptive multiplier from '
-                                f'{old_multiplier:.2f} to {DEFAULT_ADAPTIVE_MULTIPLIER:.2f}'
-                            
+                            'Resetting adaptive multiplier from '
+                            f'{old_multiplier:.2f} to {DEFAULT_ADAPTIVE_MULTIPLIER:.2f}'
                         )
 
     def update_from_response(self, response: Any) -> None:
@@ -195,10 +193,8 @@ class RateLimiter:
             )
             self.config.dynamic_adjustments.adaptive_multiplier = new_multiplier
             logger.info(
-                
-                    'Rate limit hit, increasing wait multiplier to '
-                    f'{new_multiplier:.2f} seconds per excess request'
-                
+                'Rate limit hit, increasing wait multiplier to '
+                f'{new_multiplier:.2f} seconds per excess request'
             )
 
         # Try to extract headers from the error
@@ -305,8 +301,8 @@ class RateLimiter:
             time_until_reset = max([0, reset_time - now])
             if time_until_reset > 0:
                 logger.warning(
-                        'Only {remaining} requests remaining, waiting for reset in '
-                        f'{time_until_reset:.1f} seconds'
+                    'Only {remaining} requests remaining, waiting for reset in '
+                    f'{time_until_reset:.1f} seconds'
                 )
                 # Implemented in the calling code
 
